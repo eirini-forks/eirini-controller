@@ -25,12 +25,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	eiriniv1 "code.cloudfoundry.org/eirini-controller/api/v1"
+	"code.cloudfoundry.org/eirini/k8s/reconciler"
 )
 
 // LRPReconciler reconciles a LRP object
 type LRPReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme         *runtime.Scheme
+	lrpsCrClient   reconciler.LRPsCrClient
+	workloadClient reconciler.LRPWorkloadCLient
 }
 
 //+kubebuilder:rbac:groups=eirini.cloudfoundry.org,resources=lrps,verbs=get;list;watch;create;update;patch;delete
