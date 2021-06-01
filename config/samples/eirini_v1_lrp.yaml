@@ -1,0 +1,7 @@
+apiVersion: eirini.cloudfoundry.org/v1
+kind: LRP
+metadata:
+  name: lrp-sample
+spec:
+  # Add fields here
+  foo: bar

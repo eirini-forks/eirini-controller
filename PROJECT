@@ -1,0 +1,25 @@
+domain: cloudfoundry.org
+layout:
+- go.kubebuilder.io/v3
+projectName: eirini-controller
+repo: code.cloudfoundry.org/eirini-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cloudfoundry.org
+  group: eirini
+  kind: LRP
+  path: code.cloudfoundry.org/eirini-controller/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cloudfoundry.org
+  group: eirini
+  kind: Task
+  path: code.cloudfoundry.org/eirini-controller/api/v1
+  version: v1
+version: "3"
