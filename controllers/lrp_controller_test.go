@@ -36,12 +36,14 @@ var _ = Describe("LrpController", func() {
 
 		lrp = &eiriniv1.LRP{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
+				Namespace: lrpNamespace,
 				Name:      lrpName,
 			},
 			Spec: eiriniv1.LRPSpec{
-				Image:  "eirini/dorini",
-				DiskMB: 2,
+				GUID:    GenerateGUID(),
+				Version: GenerateGUID(),
+				Image:   "eirini/dorini",
+				DiskMB:  2,
 			},
 		}
 	})

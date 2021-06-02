@@ -22,6 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,8 +32,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"code.cloudfoundry.org/eirini"
 	eiriniv1 "code.cloudfoundry.org/eirini-controller/api/v1"
 	"code.cloudfoundry.org/eirini-controller/controllers"
+	"code.cloudfoundry.org/lager/lagertest"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -83,9 +86,24 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
+	clientset, err := kubernetes.NewForConfig(cfg)
+	Expect(err).NotTo(HaveOccurred())
+
+	lrpWorkloadsClient, err := controllers.CreateLRPWorkloadsClient(
+		lagertest.NewTestLogger("eirini-controller-test"),
+		k8sManager.GetClient(),
+		clientset,
+		eirini.ControllerConfig{},
+		k8sManager.GetScheme(),
+		0,
+	)
+	Expect(err).NotTo(HaveOccurred())
+
 	err = (&controllers.LRPReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
+		Logger:         lagertest.NewTestLogger("eirini-controller-test"),
+		Client:         k8sManager.GetClient(),
+		Scheme:         k8sManager.GetScheme(),
+		WorkloadClient: lrpWorkloadsClient,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

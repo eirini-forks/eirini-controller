@@ -22,6 +22,8 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,8 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"code.cloudfoundry.org/eirini"
 	eiriniv1 "code.cloudfoundry.org/eirini-controller/api/v1"
 	"code.cloudfoundry.org/eirini-controller/controllers"
+	"code.cloudfoundry.org/eirini/migrations"
+	"code.cloudfoundry.org/lager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -65,7 +70,9 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	kubeconfig := ctrl.GetConfigOrDie()
+
+	mgr, err := ctrl.NewManager(kubeconfig, ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
@@ -78,9 +85,31 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := lager.NewLogger("eirini-controller")
+	clientset := kubernetes.NewForConfigOrDie(kubeconfig)
+
+	lrpWorkloadsClient, err := controllers.CreateLRPWorkloadsClient(
+		logger,
+		mgr.GetClient(),
+		clientset,
+		eirini.ControllerConfig{},
+		mgr.GetScheme(),
+		getLatestMigrationIndex(),
+	)
+	if err != nil {
+		setupLog.Error(err, "unable to create lrp workloads client")
+		os.Exit(1)
+	}
+
+	if true {
+		panic("foo")
+	}
+
 	if err = (&controllers.LRPReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Logger:         logger,
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		WorkloadClient: lrpWorkloadsClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LRP")
 		os.Exit(1)
@@ -112,4 +141,8 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func getLatestMigrationIndex() int {
+	return migrations.CreateMigrationStepsProvider(nil, nil, nil, "").GetLatestMigrationIndex()
 }
