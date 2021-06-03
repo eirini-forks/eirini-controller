@@ -17,6 +17,7 @@ limitations under the License.
 package controllers_test
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -90,7 +92,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	lrpWorkloadsClient, err := controllers.CreateLRPWorkloadsClient(
-		lagertest.NewTestLogger("eirini-controller-test"),
+		controllers.NewLagrLogger(log.FromContext(context.Background())),
 		k8sManager.GetClient(),
 		clientset,
 		eirini.ControllerConfig{},

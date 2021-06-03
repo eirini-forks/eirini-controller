@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -31,13 +32,13 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"code.cloudfoundry.org/eirini"
 	eiriniv1 "code.cloudfoundry.org/eirini-controller/api/v1"
 	"code.cloudfoundry.org/eirini-controller/controllers"
 	"code.cloudfoundry.org/eirini/migrations"
-	"code.cloudfoundry.org/lager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -85,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := lager.NewLogger("eirini-controller")
+	logger := controllers.NewLagrLogger(log.FromContext(context.Background()))
 	clientset := kubernetes.NewForConfigOrDie(kubeconfig)
 
 	lrpWorkloadsClient, err := controllers.CreateLRPWorkloadsClient(
