@@ -93,17 +93,15 @@ func main() {
 		logger,
 		mgr.GetClient(),
 		clientset,
-		eirini.ControllerConfig{},
+		eirini.ControllerConfig{CommonConfig: eirini.CommonConfig{
+			WorkloadsNamespace: "workloads",
+		}},
 		mgr.GetScheme(),
 		getLatestMigrationIndex(),
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to create lrp workloads client")
 		os.Exit(1)
-	}
-
-	if true {
-		panic("foo")
 	}
 
 	if err = (&controllers.LRPReconciler{
