@@ -51,6 +51,7 @@ type LRPReconciler struct {
 //+kubebuilder:rbac:groups=eirini.cloudfoundry.org,resources=lrps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=eirini.cloudfoundry.org,resources=lrps/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;watch;list
+//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=create;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -74,7 +75,7 @@ func (r *LRPReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	lrp := eiriniv1.LRP{}
 	if err := r.Get(ctx, req.NamespacedName, &lrp); err != nil {
-		logger.Error("failed-to-get-lrp", err)
+		// logger.Error("failed-to-get-lrp", err)
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -121,16 +122,26 @@ func (r *LRPReconciler) do(ctx context.Context, lrp *eiriniv1.LRP) error {
 }
 
 func (r *LRPReconciler) updateStatus(ctx context.Context, lrp *eiriniv1.LRP) error {
-	// lrpStatus, err := r.workloadClient.GetStatus(ctx, api.LRPIdentifier{
-	// 	GUID:    lrp.Spec.GUID,
-	// 	Version: lrp.Spec.Version,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	lrpStatus, err := r.WorkloadClient.GetStatus(ctx, api.LRPIdentifier{
+		GUID:    lrp.Spec.GUID,
+		Version: lrp.Spec.Version,
+	})
+	if err != nil {
+		return err
+	}
 
-	// return r.lrpsCrClient.UpdateLRPStatus(ctx, lrp, lrpStatus)
-	return nil
+	actualStaus := eiriniv1.LRPStatus{
+		Replicas: lrpStatus.Replicas,
+	}
+
+	return r.UpdateLRPStatus(ctx, lrp, actualStaus)
+}
+
+func (r *LRPReconciler) UpdateLRPStatus(ctx context.Context, lrp *eiriniv1.LRP, newStatus eiriniv1.LRPStatus) error {
+	newLRP := lrp.DeepCopy()
+	newLRP.Status = newStatus
+
+	return r.Status().Patch(ctx, newLRP, client.MergeFrom(lrp))
 }
 
 func (r *LRPReconciler) setOwnerFn(lrp *eiriniv1.LRP) func(interface{}) error {

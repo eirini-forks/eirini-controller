@@ -1,0 +1,8 @@
+resources:
+- workloads.yaml
+
+# Adds namespace to all resources.
+namespace: workloads
+
+bases:
+- ../rbac

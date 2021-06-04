@@ -83,9 +83,11 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/workloads | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+	$(KUSTOMIZE) build config/workloads | kubectl delete -f -
 
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen

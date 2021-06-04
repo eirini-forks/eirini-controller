@@ -11,8 +11,10 @@ rules:
   resources:
   - statefulsets
   verbs:
+  - create
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - eirini.cloudfoundry.org
